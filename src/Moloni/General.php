@@ -279,6 +279,8 @@ class General
             $vat = 999999990;
         }
 
+        $vat = preg_replace('/[^0-9]/', '', $vat);
+
 
         if ((int)$vat !== 999999990) {
             $customer = Customers::getByVat(['vat' => $vat]);
