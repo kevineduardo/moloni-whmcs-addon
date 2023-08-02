@@ -312,7 +312,7 @@ class General
                     $values['city'] = $clientInfo->city;
                     $values['country_id'] = $this->getCountryCode($clientInfo->country, "country");
                     $values['email'] = $clientInfo->email;
-                    $values['phone'] = $clientInfo->phonenumber;
+                    $values['phone'] = preg_replace('/[\s.-]/', '', $clientInfo->phonenumber);
 
                     $updated = Customers::update($values);
                     if ($updated['error']) {
@@ -331,7 +331,7 @@ class General
 
             $MoloniCustomer['name'] = $name;
             $MoloniCustomer['email'] = $clientInfo->email;
-            $MoloniCustomer['phone'] = $clientInfo->phonenumber;
+            $MoloniCustomer['phone'] = preg_replace('/[\s.-]/', '', $clientInfo->phonenumber);
 
             $MoloniCustomer['address'] = $clientInfo->address1 . ((!empty($clientInfo->address2)) ? " - " . $clientInfo->address2 : "");
             $MoloniCustomer['zip_code'] = $this->checkZip($clientInfo->postcode, $clientInfo->country);
