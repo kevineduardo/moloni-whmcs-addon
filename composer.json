@@ -18,6 +18,7 @@
   "scripts": {
   },
   "require": {
+    "psr/log": "1.1.4"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
@@ -26,6 +27,54 @@
   },
   "extra": {
     "changelog": [
+      {
+        "version": "v8.0.1",
+        "title": "Lançamento da versão 8.0.1",
+        "description": [
+          "Correção na pesquisa de clientes"
+        ]
+      },
+      {
+        "version": "v8.0.0",
+        "title": "Lançamento da versão 8.0.0",
+        "description": [
+          "Adicionado novo tipo de artigo (taxa de atraso).",
+          "Adicionado registos (logs) no plugin.",
+          "Optimizações na criação de documento."
+        ]
+      },
+      {
+        "version": "v3.4.0",
+        "title": "Lançamento da versão 3.4.0",
+        "description": [
+          "Documentos com razão de isenção passam a poder ser gerados no estado 'fechado'.",
+          "Descrição e nome de produtos do tipo 'Upgrade' foi corrigido."
+        ]
+      },
+      {
+        "version": "v3.3.9",
+        "title": "Lançamento da versão 3.3.9",
+        "description": [
+          "Adicionado novo tipo de artigo (fundos).",
+          "Correção a guardar configurações do plugin."
+        ]
+      },
+      {
+        "version": "v3.3.8",
+        "title": "Lançamento da versão 3.3.8",
+        "description": [
+          "Método de pagamento usado na encomenda é agora utilizado no documento.",
+          "Correção na definição do país dos clientes."
+        ]
+      },
+      {
+        "version": "v3.3.7",
+        "title": "Lançamento da versão 3.3.7",
+        "description": [
+          "Novas mensagens de erro na autenticação.",
+          "Adicionado novo tipo de serviço."
+        ]
+      },
       {
         "version": "v3.3.6",
         "title": "Lançamento da versão 3.3.6",
