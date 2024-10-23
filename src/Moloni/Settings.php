@@ -72,9 +72,10 @@ class Settings
 
 
             case "Upgrade":
-                $hostingInfo = WhmcsDB::getHostingInfo($this->item->relid);
-                $invoicedItem['name'] = "Upgrade/Downgrade - " . $hostingInfo->name;
-                $invoicedItem['summary'] = $hostingInfo->domain . "<br>" . $this->item->duedate . " - " . $hostingInfo->nextduedate;
+                $upgradeInfo = WhmcsDB::getUpgradeInfo($this->item->relid);
+
+                $invoicedItem['name'] = "Upgrade/Downgrade - " . $upgradeInfo->name;
+                $invoicedItem['summary'] = $upgradeInfo->domain . "<br>" . $this->item->duedate . " - " . $upgradeInfo->nextduedate;
                 $invoicedItem['reference'] = "UPGRADE";
                 $invoicedItem['type'] = 2;
                 break;
@@ -99,10 +100,25 @@ class Settings
                 $invoicedItem['type'] = 2;
                 break;
 
+            case "AddFunds":
+                $invoicedItem['name'] = !empty($this->item->description) ? $this->item->description : 'Adição de fundos';
+                $invoicedItem['summary'] = "";
+                $invoicedItem['reference'] = 'ADD-FUNDS';
+                $invoicedItem['type'] = 2;
+                break;
+
+            case "LateFee":
+                $invoicedItem['name'] = !empty($this->item->description) ? $this->item->description : 'Taxa de atraso';
+                $invoicedItem['summary'] = "";
+                $invoicedItem['reference'] = 'LATE-FEE';
+                $invoicedItem['type'] = 3;
+                break;
+
             case "Invoice":
                 $invoicedItem['massPay'] = true;
                 break;
 
+            case "Item":
             case "":
                 $invoicedItem['name'] = $this->item->description;
                 $invoicedItem['summary'] = "";

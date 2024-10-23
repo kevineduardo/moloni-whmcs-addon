@@ -103,11 +103,14 @@ class WhmcsDB
         $options["custom_reference"] = "Campo customizado Ref Produto";
         $options["custom_client"] = "Campo customizado NIF cliente";
 
-        foreach ($_POST as $key => $value) {
-            $val = (is_array($value) ? serialize($value) : $value);
-            if (isset($options[$key])) {
-                Capsule::table('moloni_configs')->updateOrInsert(['label' => $key, 'name' => $options[$key], 'description' => ''], ['value' => $val]);
+        foreach ($options as $key => $name) {
+            if (isset($_POST[$key])) {
+                $val = (is_array($_POST[$key]) ? serialize($_POST[$key]) : $_POST[$key]);
+            } else {
+                $val = '';
             }
+
+            Capsule::table('moloni_configs')->updateOrInsert(['label' => $key, 'name' => $name, 'description' => ''], ['value' => $val]);
         }
 
         return true;
@@ -180,6 +183,19 @@ class WhmcsDB
 
         return false;
     }
+
+    public static function getUpgradeInfo($id)
+    {
+        $row = Capsule::table('tblupgrades')
+            ->join('tblhosting', 'tblhosting.id', '=', 'tblupgrades.relid')
+            ->join('tblproducts', 'tblhosting.packageid', '=', 'tblproducts.id')
+            ->where('tblupgrades.id', $id)
+            ->select('tblupgrades.*', 'tblhosting.*', 'tblproducts.name')
+            ->first();
+
+        return ($row);
+    }
+
 
     public static function getCustomFieldProduct()
     {
@@ -303,6 +319,11 @@ class WhmcsDB
         return ($invoice);
     }
 
+    public static function getInvoiceData($id)
+    {
+        return Capsule::table('tblinvoicedata')->where('invoice_id', $id)->first();
+    }
+
     public static function getInvoiceItems($id)
     {
         $array = array();
@@ -388,5 +409,13 @@ class WhmcsDB
     public static function getCustomerCurrency($id)
     {
         return Capsule::table('tblcurrencies')->select('code', 'prefix', 'suffix')->where('id', $id)->first();
+    }
+
+    public static function getGatewayInfo($gateway)
+    {
+        return Capsule::table('tblpaymentgateways')
+            ->where('tblpaymentgateways.gateway', $gateway)
+            ->where('tblpaymentgateways.setting', 'name')
+            ->first();
     }
 }
