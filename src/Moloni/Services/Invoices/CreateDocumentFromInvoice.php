@@ -325,6 +325,8 @@ class CreateDocumentFromInvoice
             $vat = 999999990;
         }
 
+        $vat = preg_replace('/[^\w]/', '', $vat);
+
         if ((int)$vat !== 999999990) {
             $possibleCustomer = Customers::getByVat(['vat' => $vat]);
         } elseif (!empty($this->invoiceCustomer->email)) {
@@ -354,7 +356,7 @@ class CreateDocumentFromInvoice
                     $values['city'] = $this->invoiceCustomer->city;
                     $values['country_id'] = $this->getCustomerCountryCode();
                     $values['email'] = $this->invoiceCustomer->email;
-                    $values['phone'] = $this->invoiceCustomer->phonenumber;
+                    $values['phone'] = preg_replace('/[\s.-]/', '', $this->invoiceCustomer->phonenumber);
 
                     try {
                         Customers::update($values);
@@ -372,7 +374,7 @@ class CreateDocumentFromInvoice
 
             $MoloniCustomer['name'] = $name;
             $MoloniCustomer['email'] = $this->invoiceCustomer->email;
-            $MoloniCustomer['phone'] = $this->invoiceCustomer->phonenumber;
+            $MoloniCustomer['phone'] = preg_replace('/[\s.-]/', '', $this->invoiceCustomer->phonenumber);
 
             $MoloniCustomer['address'] = $this->invoiceCustomer->address1 . ((!empty($this->invoiceCustomer->address2)) ? " - " . $this->invoiceCustomer->address2 : "");
             $MoloniCustomer['zip_code'] = $this->getZipValidated($this->invoiceCustomer->postcode, $this->invoiceCustomer->country);
@@ -399,6 +401,8 @@ class CreateDocumentFromInvoice
 
             $actualCustomer['customer_id'] = $insertClient['customer_id'];
         }
+
+        $actualCustomer['vat'] = $vat;
 
         $this->documentData['customer_id'] = (int)$actualCustomer['customer_id'];
         $this->documentCustomer = $actualCustomer;
@@ -467,6 +471,45 @@ class CreateDocumentFromInvoice
                     throw new DocumentException("Não existe razão de isenção selecionada", [], 'Produtos');
                 }
 
+                // Se o cliente for do BR, obtem o VAT do cliente, e identificar se é CPF ou CNPJ
+                try {
+                    // Log da verificação do código do país do cliente
+                    $this->createInfoDocumentLog("Verificando o código do país do cliente...");
+                    
+                    if ($this->getCustomerCountryCode() == 33) {
+                        $this->createInfoDocumentLog("Código do país é '33' (Brasil). Iniciando validação do VAT (CPF/CNPJ)...");
+                        
+                        $vat = $this->documentCustomer['vat'];
+                        $this->createInfoDocumentLog("VAT(CPF/CNPJ) do cliente: " . $vat);
+                        $documento = new \Bissolli\ValidadorCpfCnpj\Documento($vat);
+                
+                        // Log do tipo de documento detectado
+                        $this->createInfoDocumentLog("Tipo de documento: " . json_encode($documento->getType()));
+                
+                        if ($documento->getType() == "CPF") {
+                            $this->documentData['products'][$x]['exemption_reason'] = "M99";
+                            $this->documentData['notes'] = "Operações não tributadas em território nacional conforme o Artigo 6.º, alínea d), do n.º 12 do CIVA.";
+                            
+                            // Log para o caso do CPF
+                            $this->createInfoDocumentLog("Documento CPF: Isenção M99 e observações aplicadas.");
+                        }
+                
+                        if ($documento->getType() == "CNPJ") {
+                            $this->documentData['products'][$x]['exemption_reason'] = "M40";
+                            
+                            // Log para o caso do CNPJ
+                            $this->createInfoDocumentLog("Documento CNPJ: Isenção M40 aplicada.");
+                        }
+                    } else {
+                        // Log quando o país não é o Brasil
+                        $this->createInfoDocumentLog("Código do país não é '33' (Brasil). Nenhuma validação necessária.");
+                    }
+                } catch (\Exception $e) {
+                    // Log de erro com a mensagem da exceção
+                    $logVATBRMessage = "Erro ao validar o VAT Brasileiro do cliente: " . $e->getMessage();
+                    $this->createWarningDocumentLog($logVATBRMessage);
+                }
+
                 unset($invoicedItem);
                 $x++;
             }
@@ -514,11 +557,20 @@ class CreateDocumentFromInvoice
         }
 
         $this->documentData['payments'] = [];
-        $this->documentData['payments'][] = [
-            'payment_method_id' => $paymentMethodId,
-            'date' => date('Y-m-d H:i:s'),
-            'value' => $orderTotal
-        ];
+
+        if ($this->fullCurrency['same_curr']) {
+            $this->documentData['payments'][] = [
+                'payment_method_id' => $paymentMethodId,
+                'date' => date('Y-m-d H:i:s'),
+                'value' => $orderTotal
+            ];
+        } else {
+            $this->documentData['payments'][] = [
+                'payment_method_id' => $paymentMethodId,
+                'date' => date('Y-m-d H:i:s'),
+                'value' => $orderTotal * $this->fullCurrency['exchange_value_product']
+            ];
+        }
     }
 
     //          SETS          //
