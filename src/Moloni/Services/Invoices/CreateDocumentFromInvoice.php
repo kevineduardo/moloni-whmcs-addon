@@ -558,17 +558,19 @@ class CreateDocumentFromInvoice
 
         $this->documentData['payments'] = [];
 
-        $paymentValue = $orderTotal;
-
-        if ($this->fullCurrency['same_curr'] == false) {
-            $paymentValue = $orderTotal * $this->fullCurrency['exchange_value'];
+        if ($this->fullCurrency['same_curr']) {
+            $this->documentData['payments'][] = [
+                'payment_method_id' => $paymentMethodId,
+                'date' => date('Y-m-d H:i:s'),
+                'value' => $orderTotal
+            ];
+        } else {
+            $this->documentData['payments'][] = [
+                'payment_method_id' => $paymentMethodId,
+                'date' => date('Y-m-d H:i:s'),
+                'value' => $orderTotal * $this->fullCurrency['exchange_value_product']
+            ];
         }
-
-        $this->documentData['payments'][] = [
-            'payment_method_id' => $paymentMethodId,
-            'date' => date('Y-m-d H:i:s'),
-            'value' => $paymentValue
-        ];
     }
 
     //          SETS          //
